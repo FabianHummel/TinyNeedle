@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyNeedle", "TinyNeedle\TinyNeedle.csproj", "{69C981E6-57C9-4318-B1AC-4B152E459CC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyNeedle.Tests", "TinyNeedle.Tests\TinyNeedle.Tests.csproj", "{3C9F356A-C08A-4550-9B03-CBD5B5BF9C4F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{69C981E6-57C9-4318-B1AC-4B152E459CC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69C981E6-57C9-4318-B1AC-4B152E459CC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69C981E6-57C9-4318-B1AC-4B152E459CC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69C981E6-57C9-4318-B1AC-4B152E459CC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C9F356A-C08A-4550-9B03-CBD5B5BF9C4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C9F356A-C08A-4550-9B03-CBD5B5BF9C4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C9F356A-C08A-4550-9B03-CBD5B5BF9C4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C9F356A-C08A-4550-9B03-CBD5B5BF9C4F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
