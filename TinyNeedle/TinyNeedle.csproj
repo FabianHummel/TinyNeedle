@@ -5,6 +5,15 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>TinyNeedle</RootNamespace>
+        <Authors>Fabian Hummel</Authors>
+        <Description>Super minimalistic but very capable Auto-DI framework for dotNET applications.</Description>
+        <RepositoryUrl>https://github.com/FabianHummel/TinyNeedle.git</RepositoryUrl>
+        <PackageTags>C#, Dependency Injection, Auto DI</PackageTags>
     </PropertyGroup>
+
+
+    <ItemGroup>
+      <None Remove="TinyNeedle.csproj.DotSettings" />
+    </ItemGroup>
 
 </Project>

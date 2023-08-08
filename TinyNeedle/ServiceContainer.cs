@@ -1,13 +1,12 @@
 ﻿using System.Collections;
-using System.ComponentModel;
 using BindingFlags = System.Reflection.BindingFlags;
 
 namespace TinyNeedle;
 
-public class ServiceContainer : IEnumerable
+public partial class ServiceContainer : IEnumerable
 {
     private readonly ServiceContainer? _parent;
-    private readonly Dictionary<Type, Lifetime> _registeredTypes = new();
+    private readonly Dictionary<Type, TypeDefinition> _registeredTypes = new();
     private readonly Dictionary<Type, Type> _registeredInterfaces = new();
     private readonly Dictionary<Type, object> _instances = new();
     
@@ -35,63 +34,6 @@ public class ServiceContainer : IEnumerable
     }
 
     /// <summary>
-    /// Automatically registers assembly-wide services.
-    /// </summary>
-    public ServiceContainer AutoRegister()
-    {
-        return this;
-    }
-
-    /// <summary>
-    /// Registers a new type for a given interface.
-    /// </summary>
-    /// <param name="lifetime">The lifetime in which the type instance will live</param>
-    /// <typeparam name="TInterface">The interface that is implemented by type T</typeparam>
-    /// <typeparam name="T">The actual implementation class for an interface TInterface</typeparam>
-    /// <returns></returns>
-    public ServiceContainer Register<TInterface, T>(Lifetime lifetime) where T : TInterface
-    {
-        _ = _registeredInterfaces.TryAdd(typeof(TInterface), typeof(T)) && 
-            _registeredTypes.TryAdd(typeof(T), lifetime);
-        return this;
-    }
-    
-    /// <summary>
-    /// Registers a new type without an interface.
-    /// </summary>
-    /// <param name="lifetime">The lifetime in which the type instance will live</param>
-    /// <typeparam name="T">The class type to register</typeparam>
-    /// <returns></returns>
-    public ServiceContainer Register<T>(Lifetime lifetime)
-    {
-        _registeredTypes.TryAdd(typeof(T), lifetime);
-        return this;
-    }
-
-    /// <summary>
-    /// Resolves a type T by searching all parents recursively for that type.
-    /// T may be an interface or a concrete class type.
-    /// </summary>
-    /// <typeparam name="T">The type to resolve to an injected instance</typeparam>
-    /// <returns>The created instance of that type</returns>
-    public T? Resolve<T>()
-    {
-        return (T?) Resolve(typeof(T));
-    }
-
-    /// <summary>
-    /// Resolves a type T by searching all parents recursively for that type.
-    /// T may be an interface or a concrete class type.
-    /// </summary>
-    /// <typeparam name="T">The type to resolve to an injected instance</typeparam>
-    /// <returns>The created instance of that type</returns>
-    /// <exception cref="NullReferenceException">When the resolved instance could not be found or created</exception>
-    public T ResolveRequired<T>()
-    {
-        return Resolve<T>() ?? throw new NullReferenceException();
-    }
-
-    /// <summary>
     /// Creates a new scope based off this service container.
     /// All transient types will be an isolated singleton instance within this scope.
     /// </summary>
@@ -108,27 +50,27 @@ public class ServiceContainer : IEnumerable
             : type;
     }
 
-    private Lifetime? GetLifetime(Type concreteType)
+    private TypeDefinition? GetTypeDefinition(Type concreteType)
     {
-        if (!_registeredTypes.TryGetValue(concreteType, out var lifetime))
+        if (!_registeredTypes.TryGetValue(concreteType, out var typeDefinition))
         {
             if (_parent is null)
             {
                 return null;
             }
             
-            return _parent.GetLifetime(concreteType);
+            return _parent.GetTypeDefinition(concreteType);
         }
 
-        return lifetime;
+        return typeDefinition;
     }
 
-    private object? Resolve(Type type)
+    private object? Resolve(Type type, object[]? @params = null)
     {
         var concreteType = GetConcreteType(type);
-        var lifetime = GetLifetime(type);
+        var typeDefinition = GetTypeDefinition(type);
         
-        switch (lifetime)
+        switch (typeDefinition?._lifetime)
         {
             // If the target is a singleton, resolve the instance
             //  from the root container down to this one.
@@ -139,7 +81,7 @@ public class ServiceContainer : IEnumerable
                     return instance;
                 }
                 
-                var obj = Instantiate(concreteType);
+                var obj = Instantiate(concreteType, @params ?? typeDefinition.Value.@params);
                 _instances.Add(concreteType, obj);
                 return obj;
             }
@@ -168,29 +110,31 @@ public class ServiceContainer : IEnumerable
                     return result;
                 }
             
-                var obj = Instantiate(concreteType);
+                var obj = Instantiate(concreteType, @params ?? typeDefinition.Value.@params);
                 _instances.Add(concreteType, obj);
                 return obj;
             }
             
             // If the target is transient, immediately return a new instance.
             case Lifetime.Transient:
-                return Instantiate(concreteType);
+                return Instantiate(concreteType, @params ?? typeDefinition.Value.@params);
             
             default:
                 return null;
         }
     }
     
-    private object Instantiate(Type concreteType)
+    private object Instantiate(Type concreteType, object[]? @params)
     {
-        var instance = Activator.CreateInstance(concreteType)!;
-        var injectableProperties = concreteType.GetProperties(BindingFlags.NonPublic | BindingFlags.Instance)
-            .Where(p => Attribute.IsDefined(p, typeof(InjectAttribute)));
-        foreach (var property in injectableProperties)
+        var instance = Activator.CreateInstance(concreteType, @params)!;
+        var properties = concreteType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        foreach (var property in properties.Where(p => Attribute.IsDefined(p, typeof(InjectAttribute))))
         {
             // https://stackoverflow.com/questions/3706389/changing-read-only-properties-with-reflection
-            property.SetValue(instance, Resolve(property.PropertyType));
+            if (concreteType.GetField($"<{property.Name}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic) is {} field)
+            {
+                field.SetValue(instance, Resolve(property.PropertyType));
+            }
         }
 
         return instance;
