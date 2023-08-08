@@ -2,7 +2,7 @@ namespace TinyNeedle.Tests.Services;
 
 public class RootService
 {
-    [Inject] private ChildService Child { get; init; }
+    [Inject] private ChildService Child { get; }
 
     public void Stuff()
     {
